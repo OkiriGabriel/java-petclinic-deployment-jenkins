@@ -37,19 +37,20 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-  trivy_scan:
-  runs-on: ubuntu-latest
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+ trivy_scan:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Run Trivy scan
-      uses: aquasecurity/trivy-action@v0.11.0
-      with:
-        scan-type: fs
-        format: table
-        output: fs.html
-        severity: HIGH,CRITICAL
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@v0.11.0
+        with:
+          scan-type: 'fs'
+          format: 'table'
+          output: 'fs.html'
+          severity: 'CRITICAL,HIGH'
 
     # - name: Build and analyze
     #   env:
