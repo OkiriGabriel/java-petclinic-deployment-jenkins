@@ -2,11 +2,11 @@
 FROM maven:3.8.5-openjdk-17 AS build
 WORKDIR /app
 
-# Copy the Maven wrapper and the project files
+# Copy the project files
 COPY . .
 
-# Make sure mvnw has executable permissions and build the application
-RUN chmod +x mvnw && ./mvnw clean package
+# Build the application using Maven without relying on mvnw
+RUN mvn -B clean package
 
 # Use an official Jetty image to run the application
 FROM jetty:11.0.11-jdk17
