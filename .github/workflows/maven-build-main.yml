@@ -58,3 +58,4 @@ jobs:
           scan-type: 'image'
           image-ref: gabeokiri/java-petclinic-app:latest
           severity: 'CRITICAL,HIGH'
+          exit-code: 1
