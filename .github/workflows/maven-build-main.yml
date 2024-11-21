@@ -2,11 +2,7 @@ name: Java CI on main branch
 
 on:
   push:
-    branches:
-      - master  # Correct indentation
-  pull_request:
-    branches:
-      - master  # Correct indentation
+    branches: [ master ]
 
 jobs:
   build:
