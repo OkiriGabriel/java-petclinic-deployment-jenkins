@@ -2,19 +2,16 @@ name: Java CI on main branch
 
 on:
   push:
-    branches: [master]
+    branches: [ master ]
   pull_request:
-    branches: [master]
+    branches: [ master ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      # Step 1: Checkout the repository
       - uses: actions/checkout@v3
 
-      # Step 2: Set up JDK
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -22,40 +19,63 @@ jobs:
           distribution: 'adopt'
           cache: maven
 
-      # Step 3: Scan the repository with Trivy (file system scan)
-      - name: Trivy FS Scan
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          scan-type: 'fs'
-          format: 'table'
-          output: 'fs-scan.html'
-          severity: 'CRITICAL,HIGH'
-
-      # Step 4: Build the Java project using Maven
       - name: Build with Maven
         run: ./mvnw -B verify
 
-      # Step 5: Build the Docker image
       - name: Build Docker Image
-        uses: mr-smithers-excellent/docker-build-push@v5
+        run: docker build -t gabeokiri/java-petclinic-app:latest .
+
+  trivy_fs_scan:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache Trivy database
+        uses: actions/cache@v4
         with:
-          image: gabeokiri/java-petclinic-app
-          tags: latest
-          registry: docker.io
-          dockerfile: Dockerfile
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          path: ~/.cache/trivy
+          key: ${{ runner.os }}-trivy-db
+          restore-keys: |
+            ${{ runner.os }}-trivy-db
+
+      - name: Run Trivy FS scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: 'fs'
+          severity: CRITICAL,HIGH
+          exit-code: 1
+          format: table
+          timeout: 300s
 
   trivy_image_scan:
     needs: build
     runs-on: ubuntu-latest
-
     steps:
-      # Step 6: Scan the Docker image with Trivy
-      - name: Trivy Docker Image Scan
+      - name: Authenticate Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Cache Trivy database
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/trivy
+          key: ${{ runner.os }}-trivy-db
+          restore-keys: |
+            ${{ runner.os }}-trivy-db
+
+      - name: Run Trivy Image scan
         uses: aquasecurity/trivy-action@0.28.0
         with:
-          scan-type: 'image'
           image-ref: gabeokiri/java-petclinic-app:latest
-          severity: 'CRITICAL,HIGH'
+          severity: CRITICAL,HIGH
           exit-code: 1
+          format: table
+          timeout: 300s
+
+  push_image:
+    needs: [build, trivy_fs_scan, trivy_image_scan]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Push Docker Image
+        run: docker push gabeokiri/java-petclinic-app:latest
