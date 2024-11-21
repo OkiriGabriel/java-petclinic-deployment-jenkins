@@ -45,12 +45,12 @@ jobs:
           key: ${{ runner.os }}-trivy-db
           restore-keys: |
             ${{ runner.os }}-trivy-db
-
       - name: Run Trivy FS scan
         uses: aquasecurity/trivy-action@0.28.0
         with:
           scan-type: 'fs'
           severity: CRITICAL,HIGH
+          exit-code: 1
           format: table
           timeout: 300s
 
@@ -65,13 +65,11 @@ jobs:
           key: ${{ runner.os }}-trivy-db
           restore-keys: |
             ${{ runner.os }}-trivy-db
-
       - name: Run Trivy Image scan
         uses: aquasecurity/trivy-action@0.28.0
         with:
           image-ref: gabeokiri/java-petclinic-app:latest
           severity: CRITICAL,HIGH
-          # exit-code: 1
           format: table
           timeout: 300s
 
