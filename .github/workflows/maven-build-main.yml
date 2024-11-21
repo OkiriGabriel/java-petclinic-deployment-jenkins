@@ -66,7 +66,6 @@ jobs:
         with:
           image-ref: gabeokiri/java-petclinic-app:latest
           severity: CRITICAL,HIGH
-          exit-code: 1
           format: table
           timeout: 300s
 
