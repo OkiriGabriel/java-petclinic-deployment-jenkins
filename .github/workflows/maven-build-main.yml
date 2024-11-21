@@ -50,9 +50,6 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Authenticate Docker Hub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
       - name: Cache Trivy database
         uses: actions/cache@v4
         with:
@@ -66,6 +63,7 @@ jobs:
         with:
           image-ref: gabeokiri/java-petclinic-app:latest
           severity: CRITICAL,HIGH
+          exit-code: 1
           format: table
           timeout: 300s
 
